@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Purchase History - StyleSense AI{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold gradient-text">StyleSense AI</h1>
+                <div class="flex items-center space-x-2">
+                    <a href="/dashboard" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">Dashboard</a>
+                    <a href="/assistant" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">AI Assistant</a>
+                    <a href="/profile" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">Profile</a>
+                    <a href="/auth/logout" class="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg font-medium text-sm transition">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-4xl font-bold">Purchase History</h2>
+                <p class="text-gray-500 mt-1">Items you clicked "Buy Now" on</p>
+            </div>
+            {% if products %}
+            <span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold">{{ products|length }} item{{ 's' if products|length != 1 }}</span>
+            {% endif %}
+        </div>
+
+        {% if products %}
+        <div class="space-y-4">
+            {% for entry in products %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center space-x-5 hover:shadow-md transition">
+                <img src="{{ entry.product.image_url }}" class="w-20 h-20 object-cover rounded-xl flex-shrink-0" onerror="this.src='https://via.placeholder.com/80?text=Product'">
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-lg text-gray-800">{{ entry.product.name }}</h3>
+                    <p class="text-gray-500 text-sm">{{ entry.product.brand }}</p>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span class="font-bold text-purple-600">₹{{ entry.product.price }}</span>
+                        <span class="text-yellow-500 text-sm">★ {{ entry.product.rating }}</span>
+                        <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{{ entry.product.category }}</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Purchased on {{ entry.purchase_date }}</p>
+                </div>
+                <a href="{{ entry.product.product_url }}" target="_blank"
+                   class="flex-shrink-0 px-5 py-2.5 btn-primary text-white rounded-xl text-sm font-semibold">
+                    Buy Again →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20">
+            <div class="text-6xl mb-4">🛍️</div>
+            <p class="text-xl text-gray-600 mb-2">No purchases yet</p>
+            <p class="text-gray-400 mb-6">Click "Buy Now" on any product to track it here</p>
+            <a href="/dashboard" class="inline-block px-6 py-3 btn-primary text-white rounded-xl font-semibold">Browse Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant - StyleSense AI{% endblock %}
+{% block content %}
+
+<div class="h-screen flex bg-gray-100">
+
+    <!-- ================= SIDEBAR ================= -->
+    <div class="w-72 bg-white border-r flex flex-col shadow-sm">
+
+        <div class="p-4 border-b">
+            <button onclick="createNewChat()"
+                class="w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition">
+                + New Chat
+            </button>
+        </div>
+
+        <div id="conversationList"
+            class="flex-1 overflow-y-auto p-3 space-y-2">
+        </div>
+
+    </div>
+
+
+    <!-- ================= MAIN AREA ================= -->
+    <div class="flex-1 flex flex-col">
+
+        <!-- Top -->
+        <div class="bg-white border-b px-8 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-purple-600">StyleSense AI</h1>
+            <a href="/dashboard"
+                class="text-sm text-gray-600 hover:text-purple-600 transition">
+                Dashboard
+            </a>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatContainer"
+            class="flex-1 overflow-y-auto px-6 py-8">
+
+            <!-- Messages will render here -->
+
+        </div>
+
+        <!-- Input -->
+        <div class="border-t bg-white px-6 py-4">
+            <form id="chatForm"
+                class="max-w-3xl mx-auto flex space-x-3">
+
+                <input type="text" id="messageInput"
+                    placeholder="Ask me about fashion..."
+                    class="flex-1 bg-gray-100 px-4 py-3 rounded-xl text-sm focus:ring-2 focus:ring-purple-400 outline-none">
+
+                <button type="submit"
+                    class="bg-purple-600 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-purple-700 transition">
+                    Send
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+const STORAGE_KEY = "stylesense_conversations_{{ user.id }}";
+
+let conversations = [];
+let activeConversationId = null;
+
+const chatContainer = document.getElementById("chatContainer");
+const conversationList = document.getElementById("conversationList");
+const chatForm = document.getElementById("chatForm");
+const messageInput = document.getElementById("messageInput");
+
+
+/* ================= STORAGE ================= */
+
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        conversations,
+        activeConversationId
+    }));
+}
+
+function loadData() {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    conversations = data.conversations || [];
+    activeConversationId = data.activeConversationId || null;
+}
+
+
+/* ================= CONVERSATIONS ================= */
+
+function createNewChat() {
+    const newChat = {
+        id: Date.now(),
+        title: "New Chat",
+        messages: []
+    };
+
+    conversations.unshift(newChat);
+    activeConversationId = newChat.id;
+    saveData();
+    renderConversations();
+    renderMessages();
+}
+
+function getActiveConversation() {
+    return conversations.find(c => c.id === activeConversationId);
+}
+
+function switchConversation(id) {
+    activeConversationId = id;
+    saveData();
+    renderConversations();
+    renderMessages();
+}
+
+function renderConversations() {
+    conversationList.innerHTML = "";
+
+    conversations.forEach(conv => {
+        const div = document.createElement("div");
+        div.className =
+            "p-3 rounded-lg text-sm cursor-pointer truncate transition " +
+            (conv.id === activeConversationId
+                ? "bg-purple-100 text-purple-700 font-semibold"
+                : "hover:bg-gray-100");
+
+        div.textContent = conv.title;
+        div.onclick = () => switchConversation(conv.id);
+
+        conversationList.appendChild(div);
+    });
+}
+
+
+/* ================= MESSAGES ================= */
+
+function renderMessages() {
+    chatContainer.innerHTML = "";
+    const active = getActiveConversation();
+    if (!active) return;
+
+    active.messages.forEach(msg => {
+
+        const wrapper = document.createElement("div");
+        wrapper.className =
+            "max-w-3xl mx-auto flex mb-4 " +
+            (msg.sender === "user"
+                ? "justify-end"
+                : "justify-start");
+
+        const bubble = document.createElement("div");
+
+        bubble.className =
+            "px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm max-w-lg " +
+            (msg.sender === "user"
+                ? "bg-purple-600 text-white"
+                : "bg-white border");
+
+        bubble.innerText = msg.text;
+
+        wrapper.appendChild(bubble);
+        chatContainer.appendChild(wrapper);
+    });
+
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+
+/* ================= SEND MESSAGE ================= */
+
+chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    const active = getActiveConversation();
+    if (!active) return;
+
+    active.messages.push({ sender: "user", text: message });
+
+    if (active.messages.length === 1) {
+        active.title = message.substring(0, 30);
+    }
+
+    saveData();
+    renderConversations();
+    renderMessages();
+    messageInput.value = "";
+
+    try {
+        const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        active.messages.push({ sender: "ai", text: data.response });
+        saveData();
+        renderMessages();
+
+    } catch {
+        active.messages.push({ sender: "ai", text: "Something went wrong." });
+        saveData();
+        renderMessages();
+    }
+});
+
+
+/* ================= INIT ================= */
+
+loadData();
+
+if (!conversations.length) {
+    createNewChat();
+} else {
+    renderConversations();
+    renderMessages();
+}
+
+</script>
+
+{% endblock %}

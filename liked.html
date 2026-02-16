@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Liked Products - StyleSense AI{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold gradient-text">StyleSense AI</h1>
+                <div class="flex items-center space-x-2">
+                    <a href="/dashboard" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">Dashboard</a>
+                    <a href="/assistant" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">AI Assistant</a>
+                    <a href="/liked" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm">Liked</a>
+                    <a href="/profile" class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">Profile</a>
+                    <a href="/auth/logout" class="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg font-medium text-sm transition">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h2 class="text-4xl font-bold mb-8">Your Liked Products</h2>
+        
+        {% if products %}
+        <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+                <img src="{{ product.image_url }}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-bold mb-1">{{ product.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">{{ product.brand }}</p>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-bold text-purple-600">₹{{ product.price }}</span>
+                        <span class="text-yellow-500">★ {{ product.rating }}</span>
+                    </div>
+                    <a href="{{ product.product_url }}" target="_blank" 
+                       class="block text-center px-4 py-2 btn-primary text-white rounded-lg">
+                        Buy Now
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <p class="text-xl text-gray-600 mb-4">No liked products yet</p>
+            <a href="/dashboard" class="px-6 py-3 btn-primary text-white rounded-lg">Browse Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

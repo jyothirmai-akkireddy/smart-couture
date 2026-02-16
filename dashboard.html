@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - StyleSense AI{% endblock %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-50">
+
+    <!-- ================= NAVBAR ================= -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+
+                <h1 class="text-2xl font-bold gradient-text">
+                    StyleSense AI
+                </h1>
+
+                <div class="flex items-center space-x-2">
+
+                    <a href="{{ url_for('dashboard.dashboard') }}"
+                       class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ url_for('ai.assistant') }}"
+                       class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">
+                        AI Assistant
+                    </a>
+
+                    <a href="{{ url_for('profile.liked') }}"
+                       class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">
+                        Liked
+                    </a>
+
+                    <a href="{{ url_for('profile.profile') }}"
+                       class="px-4 py-2 text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg font-medium text-sm transition">
+                        Profile
+                    </a>
+
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg font-medium text-sm transition">
+                        Logout
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================= CONTENT ================= -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+
+        <div class="mb-8">
+            <h2 class="text-4xl font-bold mb-2">
+                Welcome, {{ user.username }}!
+            </h2>
+            <p class="text-gray-600">
+                Discover your perfect style with AI-powered recommendations
+            </p>
+        </div>
+
+        <!-- ================= QUICK ACTIONS ================= -->
+        <div class="grid md:grid-cols-3 gap-6 mb-12">
+
+            <a href="{{ url_for('ai.assistant') }}"
+               class="p-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl text-white card-hover">
+                <h3 class="text-2xl font-bold mb-2">Chat with AI</h3>
+                <p>Get personalized styling advice</p>
+            </a>
+
+            <a href="{{ url_for('profile.liked') }}"
+               class="p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl text-white card-hover">
+                <h3 class="text-2xl font-bold mb-2">Liked Products</h3>
+                <p>View your saved items</p>
+            </a>
+
+            <a href="{{ url_for('profile.liked') }}"
+
+               class="p-6 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl text-white card-hover">
+                <h3 class="text-2xl font-bold mb-2">Purchases</h3>
+                <p>See your purchase history</p>
+            </a>
+
+        </div>
+
+        <!-- ================= TRENDING PRODUCTS ================= -->
+        <h3 class="text-3xl font-bold mb-6">Trending Products</h3>
+
+        <div class="relative overflow-hidden">
+
+            <div id="productCarousel"
+                 class="flex space-x-6 transition-transform duration-500"
+                 style="transform: translateX(0);">
+
+                {% for product in products %}
+                <div class="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg overflow-hidden card-hover">
+
+                    <img src="{{ product.image_url }}"
+                         alt="{{ product.name }}"
+                         class="w-full h-64 object-cover">
+
+                    <div class="p-6">
+
+                        <h4 class="font-bold text-xl mb-2">
+                            {{ product.name }}
+                        </h4>
+
+                        <p class="text-gray-600 mb-2">
+                            {{ product.brand }}
+                        </p>
+
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-purple-600">
+                                ₹{{ product.price }}
+                            </span>
+                            <span class="text-yellow-500">
+                                ★ {{ product.rating }}
+                            </span>
+                        </div>
+
+                        <div class="flex space-x-2">
+
+                            <button onclick="likeProduct({{ product.id }})"
+                                    class="flex-1 px-4 py-2 bg-pink-100 text-pink-600 rounded-lg hover:bg-pink-200">
+                                ♥ Like
+                            </button>
+
+                            <a href="{{ product.product_url }}"
+                               target="_blank"
+                               onclick="trackPurchase({{ product.id }})"
+                               class="flex-1 px-4 py-2 btn-primary text-white text-center rounded-lg">
+                                Buy Now
+                            </a>
+
+                        </div>
+
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+let currentPosition = 0;
+const carousel = document.getElementById('productCarousel');
+const cardWidth = 336;
+
+function autoScroll() {
+    currentPosition -= 1;
+    carousel.style.transform = `translateX(${currentPosition}px)`;
+
+    if (Math.abs(currentPosition) >= carousel.scrollWidth / 2) {
+        currentPosition = 0;
+        carousel.style.transition = 'none';
+        carousel.style.transform = `translateX(0)`;
+
+        setTimeout(() => {
+            carousel.style.transition = 'transform 0.5s linear';
+        }, 50);
+    }
+}
+
+setInterval(autoScroll, 20);
+
+async function likeProduct(productId) {
+    try {
+        const response = await fetch(`/api/like-product/${productId}`, { method: 'POST' });
+        const result = await response.json();
+        showToast(result.message, 'success');
+    } catch (error) {
+        showToast('Error liking product', 'error');
+    }
+}
+
+async function trackPurchase(productId) {
+    try {
+        await fetch(`/api/purchase-product/${productId}`, { method: 'POST' });
+        showToast('Added to purchase history!', 'success');
+    } catch (error) {
+        console.error('Error tracking purchase');
+    }
+}
+
+</script>
+
+{% endblock %}
